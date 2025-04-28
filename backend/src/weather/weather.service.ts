@@ -122,12 +122,6 @@ export class WeatherService {
   }
 
   async deleteFavorites(userId: string, id: string): Promise<void> {
-    await this.favRepo
-      .createQueryBuilder()
-      .delete()
-      .from(Favorite)
-      .where('id = :id', { id })
-      .andWhere('"userId" = :userId', { userId })
-      .execute();
+    await this.favRepo.delete({ id, userId });
   }
 }
