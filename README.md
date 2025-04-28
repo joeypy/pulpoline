@@ -1,181 +1,191 @@
 # 🌦️ Pulpo Line Weather App
 
-Aplicación fullstack desarrollada como prueba técnica. Permite consultar el clima de distintas ciudades, realizar búsquedas autocompletadas, marcar ciudades como favoritas y persistirlas en una base de datos.
+Aplicación fullstack que consume una API de clima (WeatherAPI), con **registro/login**, **búsqueda con autocompletado**, **historial local**, **favoritos por usuario** y **detalle meteorológico**.
 
 ---
 
-## 🚀 Tecnologías principales
+## 📖 Descripción del proyecto
 
-- **Frontend:** React + Vite + TypeScript
-- **Backend:** NestJS + TypeScript
-- **Base de Datos:** PostgreSQL
-- **Cache:** Redis
-- **Dockerizado:** Multicontenedor con Docker Compose
+1. **Autenticación**
 
----
+   - Registro (`POST /auth/register`)
+   - Login (`POST /auth/login`) → devuelve JWT
 
-## 🌟 Funcionalidades principales
+2. **Búsqueda de ciudades**
 
-- **Búsqueda de ciudades** con **autocompletado** mientras se escribe.
-- **Consulta de clima** actual (Celsius, Fahrenheit, viento, humedad, hora local).
-- **Historial local** de búsquedas (localStorage).
-- **Marcado de favoritos** persistente en base de datos.
-- **Vista de tabla** de ciudades.
-- **Vista detallada** de información meteorológica.
-- **Cache de resultados** usando Redis para optimizar rendimiento.
-- **Manejo robusto de errores**.
-- **Dockerización completa** (multi-container).
+   - Autocompletado: `GET /weather/autocomplete?query=texto`
 
----
+3. **Clima actual**
 
-## 🧹 Estructura del proyecto
+   - `GET /weather?city=NombreCiudad` → temperatura, viento, humedad, hora, ícono
 
-```
-/pulpo_line
-  ├── backend/      # API NestJS
-  ├── frontend/     # Aplicación React
-  ├── docker-compose.yml
-  ├── Makefile
-  └── .env
-```
+4. **Historial local**
+
+   - Guarda cada consulta en `localStorage` y muestra en `/history`
+
+5. **Favoritos (persistentes)**
+   - CRUD sobre `/weather/favorites` (requiere JWT)
+   - `GET /weather/favorites`
+   - `POST /weather/favorites` `{ city }`
+   - `DELETE /weather/favorites/:id`
 
 ---
 
-## ⚙️ Configuración de entorno
+## 🔗 Endpoints
 
-### Variables necesarias en `/pulpo_line/.env`
+| Método | Ruta                                  | Descripción                            | Auth    |
+| ------ | ------------------------------------- | -------------------------------------- | ------- |
+| POST   | `/auth/register`                      | Crear nuevo usuario                    | Público |
+| POST   | `/auth/login`                         | Autenticarse (devuelve `access_token`) | Público |
+| GET    | `/weather/autocomplete?query=<texto>` | Sugerencias de ciudades                | Público |
+| GET    | `/weather?city=<ciudad>`              | Datos de clima actual                  | Público |
+| GET    | `/weather/favorites`                  | Listar favoritos del usuario           | Privada |
+| POST   | `/weather/favorites`                  | Añadir favorito `{ city }`             | Privada |
+| DELETE | `/weather/favorites/:id`              | Eliminar favorito por `id`             | Privada |
+
+---
+
+## 🛠️ Tecnologías
+
+- **Frontend**: React, Vite, TypeScript, React Router, axios, framer-motion, shadcn/ui
+- **Backend**: NestJS, TypeScript, TypeORM, PostgreSQL, Redis, Passport-JWT, class-validator
+- **Cache**: Redis (autocomplete + datos de clima)
+- **Contenedores**: Docker (Dockerfile en `/frontend` y `/backend`) + Docker Compose + Makefile
+
+---
+
+## 🔧 Variables de entorno
+
+Crea un `.env` en la raíz (`/pulpo_line/.env`):
 
 ```env
+# PostgreSQL
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=weather
+DB_HOST=db
 DB_PORT=5432
-WEATHER_API_KEY=tu_api_key_real
+
+# WeatherAPI
+WEATHER_API_KEY=tu_api_key_aqui
+
+# Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
 ```
 
-**Notas:**
+Además, en **frontend** (`/frontend/.env`):
 
-- El backend (NestJS) también puede usar su propio `.env` en `/backend/.env` si se corre localmente.
-- El frontend (React) puede tener variables como `VITE_BACKEND_URL` si se quiere más configuración.
+```env
+VITE_BACKEND_URL=http://localhost:8000
+```
+
+Y en **backend** (`/backend/.env`) puedes repetir las mismas variables que están en la carpeta raíz si lo arrancas por separado.
 
 ---
 
-## 📦 Instalación manual (sin Docker)
+## 🚀 Levantar todo con Docker
 
-### 1. Levantar la base de datos PostgreSQL local
-
-Instala y corre PostgreSQL en tu máquina.
-
-### 2. Backend
+En la carpeta raíz (`/pulpo_line`):
 
 ```bash
-cd backend
-npm install
-npm run start:dev
-```
-
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-## 🐳 Instalación usando Docker (recomendado)
-
-Desde `/pulpo_line`:
-
-### 1. Levantar todo
-
-```bash
-docker-compose up --build
-```
-
-### 2. Acceso
-
-|  Servicio   |          URL          |
-| :---------: | :-------------------: |
-|  Frontend   | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-
----
-
-## ⚡ Uso del Makefile (opcional)
-
-Desde `/pulpo_line`:
-
-|    Comando     |                   Acción                   |
-| :------------: | :----------------------------------------: |
-|   `make up`    |        Levanta todos los servicios         |
-|  `make down`   |   Detiene y elimina todos los servicios    |
-|  `make logs`   | Muestra los logs de todos los contenedores |
-| `make restart` | Reconstruye y levanta todos los servicios  |
-
-Ejemplo:
-
-```bash
+# Primer build y arranque
 make up
+
+# Ver logs
 make logs
+
+# Detener todo
 make down
+
+# Reconstruir
+make restart
 ```
+
+Si prefieres Docker Compose directamente:
+
+```bash
+docker-compose up --build -d
+docker-compose logs -f
+docker-compose down
+```
+
+| Servicio      | URL                   |
+| ------------- | --------------------- |
+| Frontend (UI) | http://localhost:3000 |
+| Backend (API) | http://localhost:8000 |
 
 ---
 
-## 📚 Endpoints del Backend
+## 🐳 Levantar sin Docker
 
-|  Método  |              Endpoint               |                       Descripción                        |
-| :------: | :---------------------------------: | :------------------------------------------------------: |
-|  `GET`   |    `/weather?city=NombreCiudad`     |                   Obtiene clima actual                   |
-|  `GET`   | `/weather/autocomplete?query=Texto` |          Autocompletado de nombres de ciudades           |
-|  `GET`   |            `/favorites`             |               Lista de ciudades favoritas                |
-|  `POST`  |            `/favorites`             | Agrega ciudad a favoritos (`{ "city": "NombreCiudad" }`) |
-| `DELETE` |         `/favorites/:city`          |               Elimina ciudad de favoritos                |
+1. **Backend**
+   ```bash
+   cd backend
+   pnpm install
+   cp ../.env .
+   pnpm run start:dev
+   ```
+2. **Frontend**
+   ```bash
+   cd frontend
+   pnpm install
+   cp ../.env .
+   pnpm run dev
+   ```
 
 ---
 
 ## 🧪 Pruebas unitarias
 
-- **Backend:**
-  - Servicios `WeatherService` y `FavoritesService` testeados.
-  - Mocks de Redis y base de datos.
-- **Frontend:**
-  - (Opcional) Test de componentes y hooks si se desea expandir.
+### Backend (Jest)
 
-Ejecutar en backend:
+1. **WeatherService.getWeatherByCity**: mockear `HttpService` y validar estructura de `WeatherData`.
+2. **WeatherService.getAutocompleteByCity**: con mock de Redis y mock de API, validar caché y formato `"Ciudad, Región, País"`.
+3. **WeatherService.createFavorites / deleteFavorites**: mock de repositorio, asegurarse de crear y borrar solo para `userId` correcto.
+
+Ejecutar:
 
 ```bash
-npm run test
+cd backend
+pnpm run test
+```
+
+### Frontend (Vitest + Testing Library)
+
+1. **useDebounce**: simular temporizador y verificar que el valor se actualiza tras el delay.
+2. **SearchBar**: mock de API (`vi.spyOn`), tipear texto y comprobar que aparecen sugerencias.
+
+Ejecutar:
+
+```bash
+cd frontend
+pnpm run test
 ```
 
 ---
 
-## 📊 Decisiones técnicas
+## ⚙️ Despliegue
 
-- **NestJS:** Modularidad, manejo robusto de errores, DTOs y validaciones automáticas.
-- **React + Vite:** Velocidad de desarrollo y optimización frontend.
-- **Redis:** Cache in-memory para disminuir latencia en autocomplete y datos de clima.
-- **Docker:** Entorno portable, fácil de levantar en cualquier máquina.
-- **Makefile:** Mejora de experiencia de desarrollo.
-
----
-
-## 🚀 Notas finales
-
-- Aplicación preparada para escalar (p.ej: migrar Redis y PostgreSQL a servicios cloud).
-- Código limpio, estructurado y comentado.
-- Diseño pensado en buenas prácticas de arquitectura y separación de responsabilidades.
+- Cada carpeta (`/backend`, `/frontend`) tiene su propio `Dockerfile`.
+- El `docker-compose.yml` en la raíz orquesta:
+  - `db` (PostgreSQL)
+  - `redis`
+  - `backend`
+  - `frontend`
+- El **Makefile** simplifica comandos (`make up`, `make down`, etc.).
 
 ---
 
-## 📬 Autor
+## 💡 Decisiones técnicas
 
-- **Nombre:** Joseph Boscán
-- **Email:** [josephboscan.job@gmail.com](mailto:josephboscan.job@gmail.com)
-  Desarrollado como parte de la prueba técnica Fullstack Node.js (React · React Native · NestJS · Express · TypeScript · Docker).
+- **Separación frontend/backend** en contenedores, fácil de escalar.
+- **Redis** para cachear resultados y mejorar latencia.
+- **JWT** para proteger rutas de favoritos.
+- **TypeORM** con relaciones y validaciones automáticas.
+- **React + Vite** para fast refresh y bundles livianos.
+- **Framer Motion** y **shadcn/ui** para una UI fluida y moderna.
 
 ---
+
+> Pulpo Line Weather App – desarrollado por _Joseph Boscán_ como prueba técnica Fullstack React-Nest.js (React · NestJS · Redis · PostgreSQL · TypeScript · Docker).

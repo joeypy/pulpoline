@@ -33,6 +33,7 @@ export class WeatherService {
   }
 
   /** Autocomplete: cache + WeatherAPI search */
+  // src/weather/weather.service.ts
   async getAutocompleteByCity(query: string): Promise<string[]> {
     const key = `autocomplete:${query.toLowerCase()}`;
     const cached = await this.redis.get(key);
@@ -46,7 +47,14 @@ export class WeatherService {
           params: { key: this.apiKey, q: query },
         }),
       );
-      const cities: string[] = resp.data.map((i: any) => i.name);
+
+      // Mapea name, region y country, filtrando valores vacíos
+      const cities = resp.data.map((i: any) =>
+        [i.name, i.region, i.country]
+          .filter((part: string) => part && part.trim().length > 0)
+          .join(', '),
+      );
+
       await this.redis.set(key, JSON.stringify(cities), 3600);
       return cities;
     } catch (err) {
@@ -71,16 +79,18 @@ export class WeatherService {
           params: { key: this.apiKey, q: city },
         }),
       );
-      const d = resp.data;
+      const info = resp.data;
       const data: WeatherData = {
-        name: d.location.name,
-        temp_c: d.current.temp_c,
-        temp_f: d.current.temp_f,
-        condition: d.current.condition.text,
-        icon: d.current.condition.icon,
-        wind_kph: d.current.wind_kph,
-        humidity: d.current.humidity,
-        localtime: d.location.localtime,
+        name: info.location.name,
+        region: info.location.region,
+        country: info.location.country,
+        temp_c: info.current.temp_c,
+        temp_f: info.current.temp_f,
+        condition: info.current.condition.text,
+        icon: info.current.condition.icon,
+        wind_kph: info.current.wind_kph,
+        humidity: info.current.humidity,
+        localtime: info.location.localtime,
       };
       await this.redis.set(key, JSON.stringify(data), 600);
       return data;
@@ -92,17 +102,32 @@ export class WeatherService {
     }
   }
 
-  /** Postgres Favorites CRUD */
-  async getFavorites(): Promise<Favorite[]> {
-    return this.favRepo.find();
+  async getFavorites(userId: string): Promise<Favorite[]> {
+    return this.favRepo.find({
+      where: { user: { id: userId } },
+    });
   }
 
-  async createFavorites(dto: CreateWeatherDto): Promise<Favorite> {
-    const fav = this.favRepo.create({ city: dto.city });
+  async createFavorites(
+    userId: string,
+    dto: CreateWeatherDto,
+  ): Promise<Favorite> {
+    console.log('Creating favorite for user:', userId);
+    const fav = this.favRepo.create({
+      city: dto.city,
+      userId: userId,
+    });
+
     return this.favRepo.save(fav);
   }
 
-  async deleteFavorites(id: string): Promise<void> {
-    await this.favRepo.delete(id);
+  async deleteFavorites(userId: string, id: string): Promise<void> {
+    await this.favRepo
+      .createQueryBuilder()
+      .delete()
+      .from(Favorite)
+      .where('id = :id', { id })
+      .andWhere('"userId" = :userId', { userId })
+      .execute();
   }
 }

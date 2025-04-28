@@ -1,5 +1,4 @@
-// src/weather/entities/favorite-weather.entity.ts
-import { User } from 'src/user/entities/user.entity';
+// src/weather/entities/favorite.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { User } from 'src/user/entities/user.entity';
 
 @Entity('favorites')
 export class Favorite {
@@ -16,9 +16,10 @@ export class Favorite {
   @Column()
   city: string;
 
-  @ManyToOne(() => User, (user) => user.favorites, {
-    onDelete: 'CASCADE',
-  })
+  @Column('uuid')
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.favorites, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;
 }

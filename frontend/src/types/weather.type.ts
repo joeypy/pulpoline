@@ -1,5 +1,4 @@
-// src/weather/dto/weather-data.dto.ts
-export interface WeatherData {
+export type WeatherData = {
   name: string;
   region: string;
   country: string;
@@ -10,4 +9,4 @@ export interface WeatherData {
   wind_kph: number;
   humidity: number;
   localtime: string;
-}
+};
