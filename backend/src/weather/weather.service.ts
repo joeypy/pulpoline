@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { RedisService } from '../common/redis/redis.service';
-import { Favorite } from './entities/favorite-weather.entity';
+import { Favorite } from './entities/favorite.entity';
 import { CreateWeatherDto } from './dto/create-weather.dto';
 import { IConfig } from 'src/common/config/config.interface';
 import { WeatherData } from './dto/weather-data.dto';

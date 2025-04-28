@@ -100,8 +100,8 @@ docker-compose up --build
 
 |  Servicio   |          URL          |
 | :---------: | :-------------------: |
-|  Frontend   | http://localhost:3001 |
-| Backend API | http://localhost:3000 |
+|  Frontend   | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
 
 ---
 

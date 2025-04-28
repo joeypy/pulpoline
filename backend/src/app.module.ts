@@ -9,6 +9,8 @@ import { RedisModule } from './common/redis/redis.module';
 import configuration from './common/config/config';
 import { validationSchema } from './common/config/config.validation';
 import { RedisService } from './common/redis/redis.service';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { RedisService } from './common/redis/redis.service';
     RedisModule,
     PostgreModule,
     WeatherModule,
+    AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService, RedisService],

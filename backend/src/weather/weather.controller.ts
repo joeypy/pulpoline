@@ -7,9 +7,11 @@ import {
   Delete,
   Query,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { WeatherService } from './weather.service';
 import { CreateWeatherDto } from './dto/create-weather.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('weather')
 export class WeatherController {
@@ -43,6 +45,7 @@ export class WeatherController {
    * GET /weather/favorites
    * Retorna todas las ciudades marcadas como favoritas
    */
+  @UseGuards(JwtAuthGuard)
   @Get('favorites')
   async getFavorites() {
     return this.weatherService.getFavorites();
@@ -52,6 +55,7 @@ export class WeatherController {
    * POST /weather/favorites
    * Agrega una nueva ciudad a favoritos
    */
+  @UseGuards(JwtAuthGuard)
   @Post('favorites')
   async createFavorite(@Body() createFavoriteDto: CreateWeatherDto) {
     return this.weatherService.createFavorites(createFavoriteDto);
@@ -61,6 +65,7 @@ export class WeatherController {
    * DELETE /weather/favorites/:id
    * Elimina una ciudad de favoritos por su ID
    */
+  @UseGuards(JwtAuthGuard)
   @Delete('favorites/:id')
   async deleteFavorite(@Param('id') id: string) {
     await this.weatherService.deleteFavorites(id);
