@@ -188,4 +188,26 @@ pnpm run test
 
 ---
 
+## 👤 Autor
+
 > Pulpo Line Weather App – desarrollado por _Joseph Boscán_ como prueba técnica Fullstack React-Nest.js (React · NestJS · Redis · PostgreSQL · TypeScript · Docker).
+
+## 📸 Capturas de Pantalla
+
+![Pantalla de Búsqueda](./images/1.png)  
+Vista de sugerencias.
+
+![Pantalla de Búsqueda](./images/2.png)  
+Vista de resultado.
+
+![Pantalla de Búsqueda](./images/3.png)  
+Vista de historial.
+
+![Pantalla de Búsqueda](./images/4.png)  
+Vista de favoritos.
+
+![Pantalla de Búsqueda](./images/5.png)  
+Vista de Inicio de sesión.
+
+![Pantalla de Búsqueda](./images/6.png)  
+Vista de registro.
