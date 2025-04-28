@@ -1,4 +1,10 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { WeatherData } from "@/types/weather.type";
@@ -37,7 +43,12 @@ export function WeatherCard({
           alt={data.condition}
           className="w-12 h-12"
         />
-        <CardTitle>{data.name}</CardTitle>
+        <div className="flex flex-col gap-1">
+          <CardTitle>{data.name}</CardTitle>
+          <CardDescription>
+            {data.country} - {data.region}
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className="space-y-1">
         <p>Condition: {data.condition}</p>

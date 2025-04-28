@@ -1,5 +1,4 @@
-// src/components/SearchBar.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, KeyboardEvent } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,9 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(-1);
 
+  // fetch autocomplete
   useEffect(() => {
     if (!debouncedQuery.trim()) {
       setSuggestions([]);
@@ -37,8 +38,32 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
       .finally(() => setLoading(false));
   }, [debouncedQuery]);
 
+  // reset preview when suggestions or query changes
+  useEffect(() => {
+    setPreviewIndex(-1);
+  }, [suggestions, debouncedQuery]);
+
+  // key navigation handler
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!suggestions.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setPreviewIndex((i) => (i < suggestions.length - 1 ? i + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setPreviewIndex((i) => (i > 0 ? i - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      if (previewIndex >= 0) {
+        e.preventDefault(); // keep focus
+        handleSelect(suggestions[previewIndex]);
+      }
+    }
+  };
+
   const handleSelect = (city: string) => {
     setQuery(city);
+    setSuggestions([]);
+    setPreviewIndex(-1);
     onCitySelect(city);
   };
 
@@ -47,16 +72,17 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
       setError("Please enter a city");
       return;
     }
-    onCitySelect(query.trim());
+    handleSelect(query.trim());
   };
 
   const clear = () => {
     setQuery("");
     setSuggestions([]);
+    setPreviewIndex(-1);
     setError(null);
   };
 
-  // Animations
+  // animations
   const listVariants = {
     hidden: { opacity: 0, y: -10 },
     visible: { opacity: 1, y: 0 },
@@ -76,10 +102,14 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
     boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
   };
 
+  // value & style for input preview
+  const displayValue = previewIndex >= 0 ? suggestions[previewIndex] : query;
+  const inputTextColor = previewIndex >= 0 ? "text-gray-500" : "text-black";
+
   return (
     <div className="relative w-full max-w-lg mx-auto">
       <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-        {/* Input + clear button container */}
+        {/* Input + clear button */}
         <motion.div
           className="flex items-center w-full md:flex-1"
           variants={inputVariants}
@@ -87,12 +117,21 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
           transition={{ duration: 0.2 }}
         >
           <Input
-            className="flex-1"
+            className={`flex-1 ${inputTextColor}`}
             placeholder="Search city..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={displayValue}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPreviewIndex(-1);
+            }}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onBlur={() => {
+              // allow click handler on suggestion first
+              setTimeout(() => setIsFocused(false), 100);
+            }}
+            onKeyDown={handleKeyDown}
+            aria-controls="autocomplete-listbox"
+            role="combobox"
           />
           <AnimatePresence>
             {query && (
@@ -143,6 +182,8 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
       <AnimatePresence>
         {isFocused && suggestions.length > 0 && (
           <motion.ul
+            id="autocomplete-listbox"
+            role="listbox"
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -150,19 +191,27 @@ export function SearchBar({ onCitySelect }: SearchBarProps) {
             transition={{ duration: 0.2 }}
             className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
           >
-            {suggestions.map((city) => (
-              <motion.li
-                key={city}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-                onMouseDown={() => handleSelect(city)}
-                className="px-3 py-2 cursor-pointer"
-              >
-                {city}
-              </motion.li>
-            ))}
+            {suggestions.map((city, idx) => {
+              const isActive = idx === previewIndex;
+              return (
+                <motion.li
+                  key={city}
+                  id={`suggestion-${idx}`}
+                  role="option"
+                  aria-selected={isActive}
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  onMouseDown={() => handleSelect(city)}
+                  className={`px-3 py-2 cursor-pointer ${
+                    isActive ? "bg-gray-100" : ""
+                  }`}
+                >
+                  {city}
+                </motion.li>
+              );
+            })}
           </motion.ul>
         )}
       </AnimatePresence>
